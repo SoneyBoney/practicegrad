@@ -52,7 +52,7 @@ class Wrapper:
         return ret
 
     def backward(self):
-        # TODO: implementation of topological sort does not work
+        # implementation of topological sort does not work
         # L ← Empty list that will contain the sorted nodes
         # while exists nodes without a permanent mark do
         #     select an unmarked node n
@@ -72,22 +72,22 @@ class Wrapper:
         #     remove temporary mark from n
         #     mark n with a permanent mark
         #     add n to head of L
-        def _bfs(node):
-            nodes = []
-            seen = set()
-            fifo = [node]
-            while fifo:
-                p = fifo.pop(0)
-                nodes.append(p)
-                seen.add(p)
-                fifo += [parent for parent in p._parents if parent not in seen]
-            return nodes
+        L = []
+        permanent_mark = set()
 
-        nodes = _bfs(self)
+        def _visit(node):
+            if node in permanent_mark:
+                return
+            for parent in node._parents:
+                _visit(parent)
+            permanent_mark.add(node)
+            L.insert(0, node)
+
+        _visit(self)
         self.grad = 1
-        for node in nodes:
+        for node in L:
             node._backward()
-        pprint(nodes)
+        pprint(L)
 
     def __repr__(self):
         return f"<Wrapper object with val: {self.val}, grad: {self.grad}>"
@@ -113,7 +113,7 @@ import torch
 x = Wrapper(4.0)
 z = 2 * x + 2 + x
 q = z + z * x
-h = z * z
+h = (z * z).tanh()
 y = h + q + q * x
 y.backward()
 xmg, ymg = x, y
@@ -122,7 +122,7 @@ x1 = torch.Tensor([4.0]).double()
 x1.requires_grad = True
 z1 = 2 * x1 + 2 + x1
 q1 = z1 + z1 * x1
-h1 = z1 * z1
+h1 = (z1 * z1).tanh()
 y1 = h1 + q1 + q1 * x1
 y1.backward()
 xpt, ypt = x1, y1
