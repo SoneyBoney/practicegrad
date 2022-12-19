@@ -33,11 +33,11 @@ class Wrapper:
 
     def __pow__(self, arg2):
         arg2 = arg2 if isinstance(arg2, Wrapper) else Wrapper(arg2)
-        ret = Wrapper(self.val ** arg2.val, [self, arg2])
+        ret = Wrapper(self.val**arg2.val, [self, arg2])
 
         def _backward():
             self.grad += (arg2.val * (self.val ** (arg2.val - 1))) * ret.grad
-            arg2.grad += (math.log(self.val) * (self.val ** arg2.val)) * ret.grad
+            arg2.grad += (math.log(self.val) * (self.val**arg2.val)) * ret.grad
 
         ret._backward = _backward
         return ret
@@ -52,7 +52,6 @@ class Wrapper:
         return ret
 
     def backward(self):
-        # implementation of topological sort does not work
         # L ← Empty list that will contain the sorted nodes
         # while exists nodes without a permanent mark do
         #     select an unmarked node n
