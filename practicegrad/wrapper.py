@@ -51,6 +51,54 @@ class Wrapper:
         ret._backward = _backward
         return ret
 
+    def relu(self):
+        ret = Wrapper(0 if self.val < 0 else self.val, [self])
+
+        def _backward():
+            self.grad += (ret.val > 0) * ret.grad
+        ret._backward = _backward
+
+        return ret
+    
+    def log(self):
+        try:
+            ret = Wrapper(math.log(self.val), [self])
+        except:
+            print(self)
+            raise RuntimeError('log is not working')
+
+        def _backward():
+            self.grad += (1 / self.val) * ret.grad
+
+        ret._backward = _backward
+        return ret
+
+    def softmax(self, all_args):
+        try:
+            numerator = math.exp(self.val)
+            denominator = sum([math.exp(x.val) for x in all_args])
+        except:
+            print(all_args)
+            raise RuntimeError('softmax failed')
+        ret = Wrapper(numerator / denominator, all_args)
+
+        def _backward():
+            for node in all_args:
+                # j is the current node (self)
+                if node is self:
+                    # i == j
+                    node.grad += (numerator * (1 - numerator)) * ret.grad
+                else:
+                    # i != j
+                    pj = math.exp(node.val)
+                    node.grad += (-(pj*numerator)) * ret.grad
+
+        ret._backward = _backward
+        if ret.val < 0:
+            print(all_args)
+            raise RuntimeError('wrong')
+        return ret
+
     def backward(self):
         # L ← Empty list that will contain the sorted nodes
         # while exists nodes without a permanent mark do
@@ -73,12 +121,17 @@ class Wrapper:
         #     add n to head of L
         L = []
         permanent_mark = set()
+        temporary_mark = set()
 
         def _visit(node):
             if node in permanent_mark:
                 return
+            if node in temporary_mark:
+                raise RuntimeError('at least one cycle detected')
+            temporary_mark.add(node)
             for parent in node._parents:
                 _visit(parent)
+            temporary_mark.remove(node)
             permanent_mark.add(node)
             L.insert(0, node)
 
@@ -86,7 +139,7 @@ class Wrapper:
         self.grad = 1
         for node in L:
             node._backward()
-        pprint(L)
+        #pprint(L)
 
     def __repr__(self):
         return f"<Wrapper object with val: {self.val}, grad: {self.grad}>"
