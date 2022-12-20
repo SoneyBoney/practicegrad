@@ -67,7 +67,7 @@ class Layer(Module):
 class MLP(Module):
     def __init__(self, dims: List[int]):
         self.layers = [Layer(dims[i], dims[i + 1]) for i in range(len(dims) - 2)]
-        self.layers.append(Layer(dims[-2], dims[-1], neuron_nonlin='linear')) #, layer_nonlin='softmax'))
+        self.layers.append(Layer(dims[-2], dims[-1], neuron_nonlin='linear',layer_nonlin='softmax'))
 
     def forward(self, input: List[Wrapper]):
         last_out = None
